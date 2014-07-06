@@ -586,6 +586,21 @@
   ([p c c2 f e coll]
    `(.saveAsHadoopFile ~coll ~p ~c ~c2 ~f ~e)))
 
+;; Pair
+(defmacro save-as-new-api-hadoop-dataset
+  "Output the RDD to any Hadoop-supported storage system, using a Configuration
+  object for that storage system."
+  [c coll]
+  `(.saveAsNewAPIHadoopDataSet ~coll ~c))
+
+;; Pair
+(defmacro save-as-new-api-hadoop-file
+  "Output the RDD to any Hadoop-supported file system."
+  ([p c c2 f coll]
+   `(.saveAsNewAPIHadoopFile ~coll ~p ~c ~c2 ~f))
+  ([p c c2 f e coll]
+   `(.saveAsNewAPIHadoopFile ~coll ~p ~c ~c2 ~f ~e)))
+
 (defmacro save-as-object-file
   "Save this RDD as a SequenceFile of serialized objects."
   [s coll]
@@ -599,23 +614,45 @@
   ([s c coll]
    `(.saveAsTextFile ~coll ~s ~c)))
 
+;; Reg, Pair
 (defmacro set-name
   "Assign a name to this RDD"
   [s coll]
   `(.setName ~coll ~s))
+
+;; Pair
+(defmacro sort-by-key
+  "Sort the RDD by key, so that each partition contains a sorted range of the
+  elements in ascending order."
+  ([coll]
+   `(.sortByKey ~coll))
+  ([b coll]
+   `(.sortByKey ~coll ~b))
+  ([c b coll]
+   `(.sortByKey ~coll ~c ~b))
+  ([c b p coll]
+   `(.sortByKey ~coll ~c ~b ~p)))
 
 (defmacro splits
   "Set of partitions in this RDD."
   [coll]
   `(vec (.splits ~coll)))
 
-;; Reg
+;; Reg, Pair
 (defmacro subtract
   "Return an RDD with the elements from this that are not in other."
   ([rdd coll]
    `(.subtract ~coll ~rdd))
   ([rdd p coll]
    `(.subtract ~coll ~rdd ~p)))
+
+;; Pair
+(defmacro subtract-by-key
+  "Return an RDD with the pairs from this whose keys are not in other."
+  ([rdd coll]
+   `(.subtractByKey ~coll ~rdd))
+  ([rdd p coll]
+   `(.subtractByKey ~coll ~rdd ~p)))
 
 (defmacro take
   [n coll]
@@ -647,7 +684,7 @@
   [coll]
   `(.toLocalIterator ~coll))
 
-;; Reg
+;; Reg, Pair
 (defmacro ->rdd [coll] `(.toRDD ~coll))
 
 ;; Reg
@@ -661,13 +698,13 @@
   ([n c coll]
    `(.top ~coll ~n ~c)))
 
-;; SET, Reg
+;; SET, Reg, Pair
 (defmacro union
   "Return the union of this RDD and another one."
   [rdd coll]
   `(.union ~coll ~rdd))
 
-;; Reg
+;; Reg, Pair
 (defmacro unpersist
   "Mark the RDD as non-persistent, and remove all blocks for it from memory
   and disk."
@@ -676,6 +713,16 @@
   ([b coll]
    `(.unpersist ~coll ~b)))
 
+;; Pair
+(defmacro values
+  "Return an RDD with the values of each tuple."
+  [coll]
+  `(.values ~coll))
+
+;; Pair
+(defmacro v-class-tag [coll] `(.vClassTag ~coll))
+
+;; Reg, Pair
 (defmacro wrap-rdd
   [rdd coll]
   `(.wrapRDD ~coll ~rdd))
