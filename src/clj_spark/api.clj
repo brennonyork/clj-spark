@@ -300,8 +300,14 @@
 
 (defmacro pipe
   "Return an RDD created by piping elements to a forked external process."
-  ([s coll])
-  ([s e coll]))
+  ([s coll]
+   `(.pipe ~coll ~s))
+  ([s e coll]
+   `(.pipe ~coll ~s ~e)))
+
+(defmacro rdd
+  [coll]
+  `(.rdd ~coll))
 
 (defmacro reduce
   [f coll]
@@ -311,8 +317,85 @@
                      (call [this v# v2#] (~f v# v2#))))
     :else (clojure.core/reduce ~f ~coll)))
 
+(defmacro save-as-object-file
+  "Save this RDD as a SequenceFile of serialized objects."
+  [s coll]
+  `(.saveAsObjectFile ~coll ~s))
+
+(defmacro save-as-text-file
+  "Save this RDD as a compressed text file, using string representations of
+  elements."
+  ([s coll]
+   `(.saveAsTextFile ~coll ~s))
+  ([s c coll]
+   `(.saveAsTextFile ~coll ~s ~c)))
+
+(defmacro splits
+  "Set of partitions in this RDD."
+  [coll]
+  `(vec (.splits ~coll)))
+
 (defmacro take
   [n coll]
   `(cond
-    (instance? JavaRDDLike ~coll) (.take ~coll ~n)
+    (instance? JavaRDDLike ~coll) (vec (.take ~coll ~n))
     :else (clojure.core/take ~n ~coll)))
+
+(defmacro take-ordered
+  "Returns the first K elements from this RDD as defined by the specified
+  Comparator[T] and maintains the order."
+  ([n coll]
+   `(vec (.takeOrdered ~coll ~n)))
+  ([n c coll]
+   `(vec (.takeOrdered ~coll ~n ~c))))
+
+(defmacro take-sample
+  ([b n coll]
+   `(vec (.takeSample ~coll ~b ~n)))
+  ([b n s coll]
+   `(vec (.takeSample ~coll ~b ~n ~s))))
+
+(defmacro ->debug-str
+  "A description of this RDD and its recursive dependencies for debugging."
+  [coll]
+  `(.toDebugString ~coll))
+
+(defmacro ->local-iterator
+  "Return an iterator that contains all of the elements in this RDD."
+  [coll]
+  `(.toLocalIterator ~coll))
+
+(defmacro top
+  "Returns the top K elements from this RDD as defined by the specified
+  Comparator[T]."
+  ([n coll]
+   `(.top ~coll ~n))
+  ([n c coll]
+   `(.top ~coll ~n ~c)))
+
+(defmacro wrap-rdd
+  [rdd coll]
+  `(.wrapRDD ~coll ~rdd))
+
+(defmacro zip
+  "Zips this RDD with another one, returning key-value pairs with the first
+  element in each RDD, second element in each RDD, etc."
+  [rdd coll]
+  `(.zip ~coll ~rdd))
+
+(defmacro zip-partitions
+  "Zip this RDD's partitions with one (or more) RDD(s) and return a new RDD by
+  applying a function to the zipped partitions."
+  [rdd f coll]
+  `(.zipPartitions ~coll ~rdd (reify FlatMapFunction2
+                                (call [this v# v2#] (~f v# v2#)))))
+
+(defmacro zip-with-index
+  "Zips this RDD with its element indices."
+  [coll]
+  `(.zipWithIndex ~coll))
+
+(defmacro zip-with-unique-id
+  "Zips this RDD with generated unique Long ids."
+  [coll]
+  `(.zipWithUniqueId ~coll))
