@@ -47,7 +47,7 @@
     (instance? JavaRDDLike ~coll) (.aggregate ~coll ~z ~f1 ~f2)
     :else "Error: Unsupported function for ISeq"))
 
-;; Reg
+;; Reg, Pair, Doub
 (defmacro cache
   "Persist this RDD with the default storage level (`MEMORY_ONLY`)."
   [coll]
@@ -68,7 +68,7 @@
 
 (defmacro class-tag [coll] `(.classTag ~coll))
 
-;; Reg
+;; Reg, Pair, Doub
 (defmacro coalesce
   "Return a new RDD that is reduced into numPartitions partitions."
   ([n coll]
@@ -185,7 +185,7 @@
   ([t coll])
   ([t c coll]))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro distinct
   "Return a new RDD containing the distinct elements in this RDD."
   ([coll]
@@ -195,7 +195,7 @@
   ([n coll]
    `(.distinct ~coll ~n)))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro filter
   [f coll]
   `(cond
@@ -207,7 +207,7 @@
                      (call [this v#] (~f v#))))
     :else (clojure.core/filter ~f ~coll)))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro first
   [coll]
   `(cond
@@ -291,8 +291,10 @@
   [coll]
   (.fromJavaRDD ~coll))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro from-rdd
+  ([rdd coll] ; Doub
+   `(.fromRDD ~coll ~rdd))
   ([rdd e coll] ; Reg
    `(.fromRDD ~coll ~rdd ~e))
   ([rdd e e2 coll] ; Pair
@@ -342,12 +344,21 @@
   ([rdd rdd2 coll]
    (cogroup rdd rdd2 coll)))
 
+;; Doub
+(defmacro histogram
+  "Compute a histogram of the data using bucketCount number of buckets evenly
+  spaced between the minimum and maximum of the RDD."
+  ([b coll]
+   `(.histogram ~coll ~b))
+  ([b b2 coll]
+   `(.histogram ~coll ~b ~b2)))
+
 (defmacro id
   "A unique ID for this RDD (within its SparkContext)."
   [coll]
   `(.id ~coll))
 
-;; SET, Reg, Pair
+;; SET, Reg, Pair, Doub
 (defmacro intersection
   "Return the intersection of this RDD and another one."
   [rdd coll]
@@ -478,6 +489,21 @@
     :else (clojure.core/max ~c ~coll)))
   ([x y & more] `(clojure.core/max ~x ~y ~@more)))
 
+;; Doub
+(defmacro mean
+  "Compute the mean of this RDD's elements."
+  [coll]
+  `(.mean ~coll))
+
+;; Doub
+(defmacro mean-approx
+  ":: Experimental :: Approximate operation to return the mean within a
+  timeout."
+  ([t coll]
+   `(.meanApprox ~coll ~t))
+  ([t c coll]
+   `(.meanApprox ~coll ~t ~c)))
+
 (defmacro min
   "Returns the minimum element from this RDD as defined by the specified
   Comparator[T]."
@@ -500,7 +526,7 @@
   [p coll]
   `(.partitionBy ~coll ~p))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro persist
   "Set this RDD's storage level to persist its values across operations after
   the first time it is computed."
@@ -514,7 +540,7 @@
   ([s e coll]
    `(.pipe ~coll ~s ~e)))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro rdd
   [coll]
   `(.rdd ~coll))
@@ -548,7 +574,7 @@
   `(into {} (.reduceByKeyLocally ~coll (reify Function2
                                          (call [this v# v2#] (~f v# v2#))))))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro repartition
   "Return a new RDD that has exactly numPartitions partitions."
   [n coll]
@@ -562,13 +588,28 @@
   ([rdd p coll]
    `(.rightOuterJoin ~coll ~rdd ~p)))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro sample
   "Return a sampled subset of this RDD."
   ([b d coll]
    `(.sample ~coll ~b ~d))
   ([b d s coll]
    `(.sample ~coll ~b ~d ~s)))
+
+;; Doub
+(defmacro sample-std-dev
+  "Compute the sample standard deviation of this RDD's elements (which corrects
+  for bias in estimating the standard deviation by dividing by N-1 instead of
+  N)."
+  [coll]
+  `(.sampleStdev ~coll))
+
+;; Doub
+(defmacro sample-variance
+  "Compute the sample variance of this RDD's elements (which corrects for bias
+  in estimating the standard variance by dividing by N-1 instead of N)."
+  [coll]
+  `(.sampleVariance ~coll))
 
 ;; Pair
 (defmacro save-as-hadoop-dataset
@@ -614,7 +655,7 @@
   ([s c coll]
    `(.saveAsTextFile ~coll ~s ~c)))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro set-name
   "Assign a name to this RDD"
   [s coll]
@@ -637,6 +678,16 @@
   "Set of partitions in this RDD."
   [coll]
   `(vec (.splits ~coll)))
+
+;; Doub
+(defmacro srdd [coll] `(.srdd ~coll))
+
+;; Doub
+(defmacro stats
+  "Return a StatCounter object that captures the mean, variance and count of
+  the RDD's elements in one operation."
+  [coll]
+  `(.stats ~coll))
 
 ;; Reg, Pair
 (defmacro subtract
