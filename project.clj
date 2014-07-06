@@ -5,8 +5,7 @@
             :url "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.apache.spark/spark-core_2.10 "1.0.0"]]
-  :aot :all;[clj-spark.api]
-  :main clj-spark.core
-  ;:main ^:skip-aot clj-spark.core
-  :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :prep-tasks ["clean" "compile"]
+  :aot [clj-spark.api
+        clj-spark.api-test]
+  :main clj-spark.core)
