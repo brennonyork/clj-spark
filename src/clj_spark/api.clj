@@ -500,7 +500,7 @@
   [p coll]
   `(.partitionBy ~coll ~p))
 
-;; Reg
+;; Reg, Pair
 (defmacro persist
   "Set this RDD's storage level to persist its values across operations after
   the first time it is computed."
@@ -514,7 +514,7 @@
   ([s e coll]
    `(.pipe ~coll ~s ~e)))
 
-;; Reg
+;; Reg, Pair
 (defmacro rdd
   [coll]
   `(.rdd ~coll))
@@ -529,19 +529,62 @@
                      (call [this v# v2#] (~f v# v2#))))
     :else (clojure.core/reduce ~f ~coll)))
 
-;; Reg
+;; Pair
+;; TODO: Watch this for the arity type issue!!
+(defmacro reduce-by-key
+  "Merge the values for each key using an associative reduce function."
+  ([f coll]
+   `(.reduceByKey ~coll (reify Function2
+                          (call [this v# v2#] (~f v# v2#)))))
+  ([f p coll]
+   `(.reduceByKey ~coll (reify Function2
+                          (call [this v# v2#] (~f v# v2#))) ~p)))
+
+;; Pair
+(defmacro reduce-by-key-locally
+  "Merge the values for each key using an associative reduce function, but
+  return the results immediately to the master as a Map."
+  [f coll]
+  `(into {} (.reduceByKeyLocally ~coll (reify Function2
+                                         (call [this v# v2#] (~f v# v2#))))))
+
+;; Reg, Pair
 (defmacro repartition
   "Return a new RDD that has exactly numPartitions partitions."
   [n coll]
   `(.repartition ~coll ~n))
 
-;; Reg
+;; Pair
+(defmacro right-outer-join
+  "Perform a right outer join of this and other."
+  ([rdd coll]
+   `(.rightOuterJoin ~coll ~rdd))
+  ([rdd p coll]
+   `(.rightOuterJoin ~coll ~rdd ~p)))
+
+;; Reg, Pair
 (defmacro sample
   "Return a sampled subset of this RDD."
   ([b d coll]
    `(.sample ~coll ~b ~d))
   ([b d s coll]
    `(.sample ~coll ~b ~d ~s)))
+
+;; Pair
+(defmacro save-as-hadoop-dataset
+  "Output the RDD to any Hadoop-supported storage system, using a Hadoop
+  JobConf object for that storage system."
+  [c coll]
+  `(.saveAsHadoopDataSet ~coll ~c))
+
+;; Pair
+(defmacro save-as-hadoop-file
+  "Output the RDD to any Hadoop-supported file system, compressing with the
+  supplied codec."
+  ([p c c2 f coll]
+   `(.saveAsHadoopFile ~coll ~p ~c ~c2 ~f))
+  ([p c c2 f e coll]
+   `(.saveAsHadoopFile ~coll ~p ~c ~c2 ~f ~e)))
 
 (defmacro save-as-object-file
   "Save this RDD as a SequenceFile of serialized objects."
