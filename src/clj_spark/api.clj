@@ -1,12 +1,15 @@
 (ns clj-spark.api
   (:refer-clojure :exclude [count
+                            distinct
                             filter
                             first
                             group-by
+                            keys
                             map
                             max
                             min
                             name
+                            partition-by
                             reduce
                             take])
   (:import [org.apache.spark.api.java
@@ -24,6 +27,7 @@
             PairFlatMapFunction
             PairFunction
             VoidFunction])
+  (:require [clj-spark.util :as util])
   (:gen-class))
 
 (defn ctx
@@ -43,6 +47,12 @@
     (instance? JavaRDDLike ~coll) (.aggregate ~coll ~z ~f1 ~f2)
     :else "Error: Unsupported function for ISeq"))
 
+;; Reg
+(defmacro cache
+  "Persist this RDD with the default storage level (`MEMORY_ONLY`)."
+  [coll]
+  `(.cache ~coll))
+
 (defmacro cartesian
   "Return the Cartesian product of this RDD and another one, that is, the RDD
   of all pairs of elements (a, b) where a is in this and b is in other."
@@ -58,16 +68,64 @@
 
 (defmacro class-tag [coll] `(.classTag ~coll))
 
+;; Reg
+(defmacro coalesce
+  "Return a new RDD that is reduced into numPartitions partitions."
+  ([n coll]
+   `(.coalesce ~coll ~n))
+  ([n b coll]
+   `(.coalesce ~coll ~n ~b)))
+
+;; Pair
+(defmacro cogroup
+  "For each key k in this or other1 or other2, return a resulting RDD that
+  contains a tuple with the list of values for that key in this, other1 and
+  other2."
+  ([rdd coll]
+   `(.cogroup ~coll ~rdd))
+  ([rdd p coll]
+   `(.cogroup ~coll ~rdd ~p))
+  ([rdd rdd2 p coll]
+   `(.cogroup ~coll ~rdd ~rdd2 ~p)))
+
 (defmacro collect
   "Return an array that contains all of the elements in this RDD."
   [coll]
   `(vec (.collect ~coll)))
+
+;; Pair
+(defmacro collect-as-map
+  "Return the key-value pairs in this RDD to the master as a Map."
+  [coll]
+  `(into {} (.collectAsMap ~coll)))
 
 (defmacro collect-partitions
   "Return an array that contains all of the elements in a specific partition of
   this RDD."
   [ocoll coll]
   `(map vec (.collectPartitions ~coll ~ocoll)))
+
+;; Pair
+(defmacro combine-by-key
+  "Generic function to combine the elements for each key using a custom set of
+  aggregation functions."
+  ([f f2 f3 coll]
+   `(.combineByKey ~coll
+                   (reify Function
+                     (call [this v#] (~f v#)))
+                   (reify Function2
+                     (call [this v# v2#] (~f2 v# v2#)))
+                   (reify Function2
+                     (call [this v# v2#] (~f3 v# v2#)))))
+  ([f f2 f3 p coll]
+   `(.combineByKey ~coll
+                   (reify Function
+                     (call [this v#] (~f v#)))
+                   (reify Function2
+                     (call [this v# v2#] (~f2 v# v2#)))
+                   (reify Function2
+                     (call [this v# v2#] (~f3 v# v2#)))
+                   ~p)))
 
 (defmacro context
   "The SparkContext that this RDD was created on."
@@ -92,6 +150,30 @@
   [r coll]
   `(.countApproxDistinct ~coll ~r))
 
+;; Pair
+(defmacro count-approx-distinct-by-key
+  "Return approximate number of distinct values for each key this RDD."
+  ([r coll]
+   `(.countApproxDistinctByKey ~coll ~r))
+  ([r p coll]
+   `(.countApproxDistinctByKey ~coll ~r ~p)))
+
+;; Pair
+(defmacro count-by-key
+  "Count the number of elements for each key, and return the result to the
+  master as a Map."
+  [coll]
+  `(into {} (.countByKey ~coll)))
+
+;; Pair
+(defmacro count-by-key-approx
+  ":: Experimental :: Approximate version of countByKey that can return a
+  partial result if it does not finish within a timeout."
+  ([t coll]
+   `(.countByKeyApprox ~coll ~t))
+  ([t c coll]
+   `(.countByKeyApprox ~coll ~t ~c)))
+
 (defmacro count-by-value
   "Return the count of each unique value in this RDD as a map of (value, count)
   pairs."
@@ -103,17 +185,33 @@
   ([t coll])
   ([t c coll]))
 
+;; Reg, Pair
+(defmacro distinct
+  "Return a new RDD containing the distinct elements in this RDD."
+  ([coll]
+   `(cond
+     (instance? JavaRDDLike) (.distinct ~coll)
+     :else (clojure.core/distinct ~coll)))
+  ([n coll]
+   `(.distinct ~coll ~n)))
+
+;; Reg, Pair
 (defmacro filter
   [f coll]
   `(cond
+    (instance? JavaPairRDD ~coll)
+    (.filter ~coll (reify Function
+                     (call [this v#] (~f (util/unbox-tuple2 v#)))))
     (instance? JavaRDDLike ~coll)
     (.filter ~coll (reify Function
                      (call [this v#] (~f v#))))
     :else (clojure.core/filter ~f ~coll)))
 
+;; Reg, Pair
 (defmacro first
   [coll]
   `(cond
+    (instance? JavaPairRDD ~coll) (let [i# (.first ~coll)] (util/unbox-tuple2 i#))
     (instance? JavaRDDLike ~coll) (.first ~coll)
     :else (clojure.core/first ~coll)))
 
@@ -123,6 +221,14 @@
   [f coll]
   `(.flatMap ~coll (reify FlatMapFunction
                      (call [this v#] (~f v#)))))
+
+;; Pair
+(defmacro flatmap-values
+  "Pass each value in the key-value pair RDD through a flatMap function without
+  changing the keys; this also retains the original RDD's partitioning."
+  [f coll]
+  `(.flatmapValues ~coll (reify Function
+                           (call [this v#] (~f v#)))))
 
 (defmacro flatmap->double
   "Return a new RDD by first applying a function to all elements of this RDD,
@@ -148,6 +254,19 @@
                       (call [this v# v2#] (~f v# v2#))))
     :else "Error: Unsupported function for ISeq"))
 
+;; Pair
+(defmacro fold-by-key
+  "Merge the values for each key using an associative function and a neutral
+  \"zero value\" which may be added to the result an arbitrary number of times,
+  and must not change the result (e.g ., Nil for list concatenation, 0 for
+  addition, or 1 for multiplication.)."
+  ([v f coll]
+   `(.foldByKey ~coll ~v (reify Function2
+                           (call [this v# v2#] (~f v# v2#)))))
+  ([v p f coll]
+   `(.foldByKey ~coll ~v ~p (reify Function2
+                              (call [this v# v2#] (~f v# v2#))))))
+
 (defmacro foreach
   "Applies a function f to all elements of this RDD."
   [f coll]
@@ -165,6 +284,19 @@
     (.foreachPartition ~coll (reify VoidFunction
                                (call [this v#] (~f v#))))
     :else "Error: Unsupported function for ISeq"))
+
+;; Pair
+(defmacro from-java-rdd
+  "Convert a JavaRDD of key-value pairs to JavaPairRDD."
+  [coll]
+  (.fromJavaRDD ~coll))
+
+;; Reg, Pair
+(defmacro from-rdd
+  ([rdd e coll] ; Reg
+   `(.fromRDD ~coll ~rdd ~e))
+  ([rdd e e2 coll] ; Pair
+   `(.fromRDD ~coll ~rdd ~e ~e2)))
 
 (defmacro get-checkpoint-file
   "Gets the name of the file to which this RDD was checkpointed"
@@ -194,10 +326,32 @@
    `(.groupBy ~coll (reify Function
                       (call [this v#] (~f v#))) ~n)))
 
+;; Pair
+(defmacro group-by-key
+  "Group the values for each key in the RDD into a single sequence."
+  ([coll]
+   `(.groupByKey ~coll))
+  ([p coll]
+   `(.groupByKey ~coll ~p)))
+
+;; Pair
+(defmacro group-with
+  "Alias for cogroup."
+  ([rdd coll]
+   (cogroup rdd coll))
+  ([rdd rdd2 coll]
+   (cogroup rdd rdd2 coll)))
+
 (defmacro id
   "A unique ID for this RDD (within its SparkContext)."
   [coll]
   `(.id ~coll))
+
+;; SET, Reg, Pair
+(defmacro intersection
+  "Return the intersection of this RDD and another one."
+  [rdd coll]
+  `(.intersection ~coll ~rdd))
 
 (defmacro is-checkpointed
   "Return whether this RDD has been checkpointed or not"
@@ -210,11 +364,45 @@
   [s t coll]
   `(.iterator ~coll ~s ~t))
 
+;; Pair
+(defmacro join
+  "Return an RDD containing all pairs of elements with matching keys in this
+  and other."
+  ([rdd coll]
+   `(.join ~coll ~rdd))
+  ([rdd p coll]
+   `(.join ~coll ~rdd ~p)))
+
+;; Pair
+(defmacro k-class-tag [coll] `(.kClassTag ~coll))
+
+;; Pair
+(defmacro keys
+  "Return an RDD with the keys of each tuple."
+  [coll]
+  `(cond
+    (instance? JavaPairRDD ~coll) (.keys ~coll)
+    :else (clojure.core/keys ~coll)))
+
 (defmacro key-by
   "Creates tuples of the elements in this RDD by applying f."
   [f coll]
   `(.keyBy ~coll (reify Function
                    (call [this v#] (~f v#)))))
+
+;; Pair
+(defmacro left-outer-join
+  "Perform a left outer join of this and other."
+  ([rdd coll]
+   `(.leftOuterJoin ~coll ~rdd))
+  ([rdd p coll]
+   `(.leftOuterJoin ~coll ~rdd ~p)))
+
+;; Pair
+(defmacro lookup
+  "Return the list of values in the RDD for key key."
+  [k coll]
+  `(.lookup ~coll ~k))
 
 (defmacro map
   ([f coll]
@@ -272,6 +460,14 @@
   `(.mapToPair ~coll (reify PairFunction
                        (call [this v#] (~f v#)))))
 
+;; Pair
+(defmacro map-values
+  "Pass each value in the key-value pair RDD through a map function without
+  changing the keys; this also retains the original RDD's partitioning."
+  [f coll]
+  `(.mapValues ~coll (reify Function
+                       (call [this v#] (~f v#)))))
+
 (defmacro max
   "Returns the maximum element from this RDD as defined by the specified
   Comparator[T]."
@@ -298,6 +494,19 @@
     (instance? JavaRDDLike ~coll) (.name ~coll)
     :else (clojure.core/name ~coll)))
 
+;; Pair
+(defmacro partition-by
+  "Return a copy of the RDD partitioned using the specified partitioner."
+  [p coll]
+  `(.partitionBy ~coll ~p))
+
+;; Reg
+(defmacro persist
+  "Set this RDD's storage level to persist its values across operations after
+  the first time it is computed."
+  [p coll]
+  `(.persist ~coll ~p))
+
 (defmacro pipe
   "Return an RDD created by piping elements to a forked external process."
   ([s coll]
@@ -305,17 +514,34 @@
   ([s e coll]
    `(.pipe ~coll ~s ~e)))
 
+;; Reg
 (defmacro rdd
   [coll]
   `(.rdd ~coll))
 
 (defmacro reduce
+  "Reduces the elements of this RDD using the specified commutative and
+  associative binary operator."
   [f coll]
   `(cond
     (instance? JavaRDDLike ~coll)
     (.reduce ~coll (reify Function2
                      (call [this v# v2#] (~f v# v2#))))
     :else (clojure.core/reduce ~f ~coll)))
+
+;; Reg
+(defmacro repartition
+  "Return a new RDD that has exactly numPartitions partitions."
+  [n coll]
+  `(.repartition ~coll ~n))
+
+;; Reg
+(defmacro sample
+  "Return a sampled subset of this RDD."
+  ([b d coll]
+   `(.sample ~coll ~b ~d))
+  ([b d s coll]
+   `(.sample ~coll ~b ~d ~s)))
 
 (defmacro save-as-object-file
   "Save this RDD as a SequenceFile of serialized objects."
@@ -330,10 +556,23 @@
   ([s c coll]
    `(.saveAsTextFile ~coll ~s ~c)))
 
+(defmacro set-name
+  "Assign a name to this RDD"
+  [s coll]
+  `(.setName ~coll ~s))
+
 (defmacro splits
   "Set of partitions in this RDD."
   [coll]
   `(vec (.splits ~coll)))
+
+;; Reg
+(defmacro subtract
+  "Return an RDD with the elements from this that are not in other."
+  ([rdd coll]
+   `(.subtract ~coll ~rdd))
+  ([rdd p coll]
+   `(.subtract ~coll ~rdd ~p)))
 
 (defmacro take
   [n coll]
@@ -365,6 +604,12 @@
   [coll]
   `(.toLocalIterator ~coll))
 
+;; Reg
+(defmacro ->rdd [coll] `(.toRDD ~coll))
+
+;; Reg
+(defmacro ->str [coll] `(.toString ~coll))
+
 (defmacro top
   "Returns the top K elements from this RDD as defined by the specified
   Comparator[T]."
@@ -372,6 +617,21 @@
    `(.top ~coll ~n))
   ([n c coll]
    `(.top ~coll ~n ~c)))
+
+;; SET, Reg
+(defmacro union
+  "Return the union of this RDD and another one."
+  [rdd coll]
+  `(.union ~coll ~rdd))
+
+;; Reg
+(defmacro unpersist
+  "Mark the RDD as non-persistent, and remove all blocks for it from memory
+  and disk."
+  ([coll]
+   `(.unpersist ~coll))
+  ([b coll]
+   `(.unpersist ~coll ~b)))
 
 (defmacro wrap-rdd
   [rdd coll]
