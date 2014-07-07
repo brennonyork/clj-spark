@@ -11,7 +11,5 @@
         clj-spark.set
         clj-spark.set-test
         clj-spark.contrib
-        clj-spark.contrib-test
-        clj-spark.api
-        clj-spark.api-test]
+        clj-spark.contrib-test]
   :main clj-spark.core)

@@ -1,6 +1,21 @@
 (ns clj-spark.core
   (:refer-clojure :exclude [count distinct filter first group-by keys map max
-                            min name partition-by reduce take]))
+                            min name partition-by reduce take])
+  (:require [clj-spark.util :as util])
+  (:import [org.apache.spark Partitioner]
+           [org.apache.spark.api.java JavaRDDLike JavaRDD JavaPairRDD
+            JavaDoubleRDD]
+           [org.apache.spark.api.java.function
+            DoubleFlatMapFunction
+            DoubleFunction
+            FlatMapFunction
+            FlatMapFunction2
+            Function
+            Function2
+            Function3
+            PairFlatMapFunction
+            PairFunction
+            VoidFunction]))
 
 (defmacro count
   "Return the number of elements in the RDD."
@@ -9,29 +24,26 @@
     (instance? JavaRDDLike ~coll) (.count ~coll)
     :else (clojure.core/count ~coll)))
 
-;; Reg, Pair, Doub
 (defmacro distinct
   "Return a new RDD containing the distinct elements in this RDD."
   ([coll]
    `(cond
      (instance? JavaRDDLike) (.distinct ~coll)
      :else (clojure.core/distinct ~coll)))
-  ([n coll]
-   `(.distinct ~coll ~n)))
+  ([num-partitions coll]
+   `(.distinct ~coll ~num-partitions)))
 
-;; Reg, Pair, Doub
 (defmacro filter
-  [f coll]
+  [pred coll]
   `(cond
     (instance? JavaPairRDD ~coll)
     (.filter ~coll (reify Function
-                     (call [this v#] (~f (util/unbox-tuple2 v#)))))
+                     (call [this v#] (~pred (util/unbox-tuple2 v#)))))
     (instance? JavaRDDLike ~coll)
     (.filter ~coll (reify Function
-                     (call [this v#] (~f v#))))
-    :else (clojure.core/filter ~f ~coll)))
+                     (call [this v#] (~pred v#))))
+    :else (clojure.core/filter ~pred ~coll)))
 
-;; Reg, Pair, Doub
 (defmacro first
   [coll]
   `(cond
@@ -47,11 +59,10 @@
      (.groupBy ~coll (reify Function
                        (call [this v#] (~f v#))))
      :else (clojure.core/group-by ~f ~coll)))
-  ([f n coll]
+  ([f num-partitions coll]
    `(.groupBy ~coll (reify Function
-                      (call [this v#] (~f v#))) ~n)))
+                      (call [this v#] (~f v#))) ~num-partitions)))
 
-;; Pair
 (defmacro keys
   "Return an RDD with the keys of each tuple."
   [coll]
@@ -73,20 +84,20 @@
   "Returns the maximum element from this RDD as defined by the specified
   Comparator[T]."
   ([x] `(clojure.core/max ~x))
-  ([c coll]
-  `(cond
-    (instance? JavaRDDLike ~coll) (.max ~coll ~c)
-    :else (clojure.core/max ~c ~coll)))
+  ([pred coll]
+   `(cond
+     (instance? JavaRDDLike ~coll) (.max ~coll (comparator ~pred))
+     :else (clojure.core/max ~pred ~coll)))
   ([x y & more] `(clojure.core/max ~x ~y ~@more)))
 
 (defmacro min
   "Returns the minimum element from this RDD as defined by the specified
   Comparator[T]."
   ([x] `(clojure.core/min ~x))
-  ([c coll]
-  `(cond
-    (instance? JavaRDDLike ~coll) (.min ~coll ~c)
-    :else (clojure.core/min ~c ~coll)))
+  ([pred coll]
+   `(cond
+     (instance? JavaRDDLike ~coll) (.min ~coll (comparator ~pred))
+     :else (clojure.core/min ~pred ~coll)))
   ([x y & more] `(clojure.core/min ~x ~y ~@more)))
 
 (defmacro name
@@ -95,21 +106,27 @@
     (instance? JavaRDDLike ~coll) (.name ~coll)
     :else (clojure.core/name ~coll)))
 
-;; Pair
 (defmacro partition-by
-  "Return a copy of the RDD partitioned using the specified partitioner."
-  [p coll]
-  `(.partitionBy ~coll ~p))
+  "Return a copy of the RDD partitioned using the specified partitioner. If no
+  partitioner is specified the `Partitioner/defaultPartitioner` will be used."
+  [f coll]
+  `(cond
+    (instance? JavaPairRDD ~coll)
+    (if ~f
+      (.partitionBy ~coll ~f)
+      (.partitionBy ~coll (Partitioner/defaultPartitioner ~coll nil)))
+    :else (clojure.core/partition-by ~f ~coll)))
 
 (defmacro reduce
   "Reduces the elements of this RDD using the specified commutative and
   associative binary operator."
-  [f coll]
-  `(cond
-    (instance? JavaRDDLike ~coll)
-    (.reduce ~coll (reify Function2
-                     (call [this v# v2#] (~f v# v2#))))
-    :else (clojure.core/reduce ~f ~coll)))
+  ([f coll]
+   `(cond
+     (instance? JavaRDDLike ~coll)
+     (.reduce ~coll (reify Function2
+                      (call [this v# v2#] (~f v# v2#))))
+     :else (clojure.core/reduce ~f ~coll)))
+  ([f v coll] `(clojure.core/reduce ~f ~v ~coll)))
 
 (defmacro take
   [n coll]
