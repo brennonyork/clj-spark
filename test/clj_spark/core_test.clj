@@ -104,13 +104,13 @@
 
 (deftest transformations
   (let [sc (api/ctx "local[2]" "transform-tests")]
+    (testing "count"
+      (is (= (count (.textFile sc "LICENSE")) 21)))
+    (testing "distinct"
+      (is (= (count (distinct (.textFile sc "LICENSE"))) 18)))
     (testing "map"
-      (is (= (->> (.textFile sc "README.md")
+      (is (= (->> (.textFile sc "LICENSE")
                   (map (fn [x] (count (clj-str/split x #" "))))
                   (reduce (fn [x y] (+ x y))))
-             11)))
-    (testing "count"
-      (is (= (->> (.textFile sc "README.md")
-                  (count))
-             4)))
+             175)))
     (.stop sc)))

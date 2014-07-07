@@ -28,7 +28,7 @@
   "Return a new RDD containing the distinct elements in this RDD."
   ([coll]
    `(cond
-     (instance? JavaRDDLike) (.distinct ~coll)
+     (instance? JavaRDDLike ~coll) (.distinct ~coll)
      :else (clojure.core/distinct ~coll)))
   ([num-partitions coll]
    `(.distinct ~coll ~num-partitions)))
