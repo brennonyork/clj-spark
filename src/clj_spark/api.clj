@@ -689,7 +689,13 @@
   [coll]
   `(.stats ~coll))
 
-;; Reg, Pair
+;; Doub
+(defmacro stdev
+  "Compute the standard deviation of this RDD's elements."
+  [coll]
+  `(.stdev ~coll))
+
+;; Reg, Pair, Doub
 (defmacro subtract
   "Return an RDD with the elements from this that are not in other."
   ([rdd coll]
@@ -704,6 +710,20 @@
    `(.subtractByKey ~coll ~rdd))
   ([rdd p coll]
    `(.subtractByKey ~coll ~rdd ~p)))
+
+;; Doub
+(defmacro sum
+  "Add up the elements in this RDD."
+  [coll]
+  `(.sum ~coll))
+
+;; Doub
+(defmacro sum-approx
+  ":: Experimental :: Approximate operation to return the sum within a timeout."
+  ([t coll]
+   `(.sumApprox ~coll ~t))
+  ([t c coll]
+   `(.sumApprox ~coll ~t ~c)))
 
 (defmacro take
   [n coll]
@@ -735,7 +755,7 @@
   [coll]
   `(.toLocalIterator ~coll))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro ->rdd [coll] `(.toRDD ~coll))
 
 ;; Reg
@@ -749,7 +769,7 @@
   ([n c coll]
    `(.top ~coll ~n ~c)))
 
-;; SET, Reg, Pair
+;; SET, Reg, Pair, Doub
 (defmacro union
   "Return the union of this RDD and another one."
   [rdd coll]
@@ -765,15 +785,21 @@
    `(.unpersist ~coll ~b)))
 
 ;; Pair
+(defmacro v-class-tag [coll] `(.vClassTag ~coll))
+
+;; Pair
 (defmacro values
   "Return an RDD with the values of each tuple."
   [coll]
   `(.values ~coll))
 
-;; Pair
-(defmacro v-class-tag [coll] `(.vClassTag ~coll))
+;; Doub
+(defmacro variance
+  "Compute the variance of this RDD's elements."
+  [coll]
+  `(.variance ~coll))
 
-;; Reg, Pair
+;; Reg, Pair, Doub
 (defmacro wrap-rdd
   [rdd coll]
   `(.wrapRDD ~coll ~rdd))
