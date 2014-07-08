@@ -108,6 +108,18 @@
       (is (= (count (.textFile sc "LICENSE")) 21)))
     (testing "distinct"
       (is (= (count (distinct (.textFile sc "LICENSE"))) 18)))
+    (testing "filter"
+      (is (= (count (filter (fn [x] (not (clj-str/blank? x)))
+                            (.textFile sc "LICENSE"))) 17)))
+    (testing "first"
+      (is (= (first (.textFile sc "LICENSE")) "The MIT License (MIT)")))
+    (testing "group-by"
+      (is (= (first (first (group-by (fn [x] (count x))
+                                     (.textFile sc "LICENSE")))) 56)))
+    (testing "keys"
+      (is (= (.collect (keys (group-by (fn [x] (count x))
+                                     (.textFile sc "LICENSE"))))
+             [56 76 0 74 72 70 78 21 47 77 73 75 69 9 31])))
     (testing "map"
       (is (= (->> (.textFile sc "LICENSE")
                   (map (fn [x] (count (clj-str/split x #" "))))
