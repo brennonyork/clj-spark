@@ -1,7 +1,12 @@
-(ns clj-spark.core
+(ns ^{:doc
+      "clj-spark.core maintains all Spark functions that correlate directly to
+      clojure.core functions. These functions adhere to the contract that,
+      agnostic of their input (instance? ISeq or JavaRDDLike), they will return
+      their correct values regardless of data structure."
+      :author "Brennon York"}
+  clj-spark.core
   (:refer-clojure :exclude [count distinct filter first group-by keys map max
                             min name partition-by reduce take])
-  (:require [clj-spark.util :as util])
   (:import [org.apache.spark Partitioner]
            [org.apache.spark.api.java JavaRDDLike JavaRDD JavaPairRDD
             JavaDoubleRDD]
@@ -15,7 +20,8 @@
             Function3
             PairFlatMapFunction
             PairFunction
-            VoidFunction]))
+            VoidFunction])
+  (:require [clj-spark.util :as util]))
 
 (defmacro count
   "Return the number of elements in the RDD."

@@ -75,10 +75,10 @@
   ([rdd rdd2 p coll]
    `(.cogroup ~coll ~rdd ~rdd2 ~p)))
 
-(defmacro collect
-  "Return an array that contains all of the elements in this RDD."
-  [coll]
-  `(vec (.collect ~coll)))
+;; (defmacro collect
+;;   "Return an array that contains all of the elements in this RDD."
+;;   [coll]
+;;   `(vec (.collect ~coll)))
 
 ;; Pair
 (defmacro collect-as-map
@@ -346,10 +346,10 @@
   `(.id ~coll))
 
 ;; SET, Reg, Pair, Doub
-(defmacro intersection
-  "Return the intersection of this RDD and another one."
-  [rdd coll]
-  `(.intersection ~coll ~rdd))
+;; (defmacro intersection
+;;   "Return the intersection of this RDD and another one."
+;;   [rdd coll]
+;;   `(.intersection ~coll ~rdd))
 
 (defmacro is-checkpointed
   "Return whether this RDD has been checkpointed or not"
@@ -757,10 +757,10 @@
    `(.top ~coll ~n ~c)))
 
 ;; SET, Reg, Pair, Doub
-(defmacro union
-  "Return the union of this RDD and another one."
-  [rdd coll]
-  `(.union ~coll ~rdd))
+;; (defmacro union
+;;   "Return the union of this RDD and another one."
+;;   [rdd coll]
+;;   `(.union ~coll ~rdd))
 
 ;; Reg, Pair
 (defmacro unpersist

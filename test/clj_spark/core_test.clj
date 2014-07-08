@@ -4,6 +4,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.string :as clj-str]
             [clj-spark.core :refer :all]
+            [clj-spark.contrib :as contrib]
             [clj-spark.api :as api])
   (:import [org.apache.spark.api.java.function Function])
   (:gen-class))
@@ -117,12 +118,25 @@
       (is (= (first (first (group-by (fn [x] (count x))
                                      (.textFile sc "LICENSE")))) 56)))
     (testing "keys"
-      (is (= (.collect (keys (group-by (fn [x] (count x))
-                                     (.textFile sc "LICENSE"))))
+      (is (= (contrib/collect (keys (group-by (fn [x] (count x))
+                                              (.textFile sc "LICENSE"))))
              [56 76 0 74 72 70 78 21 47 77 73 75 69 9 31])))
     (testing "map"
       (is (= (->> (.textFile sc "LICENSE")
                   (map (fn [x] (count (clj-str/split x #" "))))
                   (reduce (fn [x y] (+ x y))))
              175)))
+    (testing "max"
+      (is (= (->> (.textFile sc "LICENSE")
+                  (map (fn [x] (count (clj-str/split x #" "))))
+                  (max (fn [x y] (< x y))))
+             16)))
+    (testing "min"
+      (is (= (->> (.textFile sc "LICENSE")
+                  (map (fn [x] (count (clj-str/split x #" "))))
+                  (min (fn [x y] (< x y))))
+             1)))
+    (testing "name"
+      (is (= (name (.setName (.textFile sc "LICENSE") "License")) "License")))
+    (testing "partition-by")
     (.stop sc)))
