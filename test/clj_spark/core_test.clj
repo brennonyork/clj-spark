@@ -6,7 +6,8 @@
             [clj-spark.core :refer :all]
             [clj-spark.contrib :as contrib]
             [clj-spark.api :as api])
-  (:import [org.apache.spark.api.java.function Function])
+  (:import [org.apache.spark HashPartitioner]
+           [org.apache.spark.api.java.function Function])
   (:gen-class))
 
 (deftest maintain-origins
@@ -103,7 +104,7 @@
       (is (= (take 1 []) []))
       (is (= (take 3 (drop 5 (range 1 11))) [6 7 8])))))
 
-(deftest transformations
+(deftest core-transformations
   (let [sc (api/ctx "local[2]" "transform-tests")]
     (testing "count"
       (is (= (count (.textFile sc "LICENSE")) 21)))
@@ -124,8 +125,8 @@
     (testing "map"
       (is (= (->> (.textFile sc "LICENSE")
                   (map (fn [x] (count (clj-str/split x #" "))))
-                  (reduce (fn [x y] (+ x y))))
-             175)))
+                  (first))
+             4)))
     (testing "max"
       (is (= (->> (.textFile sc "LICENSE")
                   (map (fn [x] (count (clj-str/split x #" "))))
@@ -138,5 +139,27 @@
              1)))
     (testing "name"
       (is (= (name (.setName (.textFile sc "LICENSE") "License")) "License")))
-    (testing "partition-by")
+    (testing "partition-by"
+      (is (= (->> (.textFile sc "LICENSE")
+                  (group-by (fn [x] (count x)))
+                  (partition-by (HashPartitioner. 8))
+                  (first)
+                  (first))
+             56))
+      (is (= (->> (.textFile sc "LICENSE")
+                  (group-by (fn [x] (count x)))
+                  (partition-by nil)
+                  (first)
+                  (first))
+             56)))
+    (testing "reduce"
+      (is (= (->> (.textFile sc "LICENSE")
+                  (map (fn [x] (count (clj-str/split x #" "))))
+                  (reduce (fn [x y] (+ x y))))
+             175)))
+    (testing "take"
+      (is (= (->> (.textFile sc "LICENSE")
+                  (map (fn [x] (count (clj-str/split x #" "))))
+                  (take 5))
+             [4 1 5 1 13])))
     (.stop sc)))

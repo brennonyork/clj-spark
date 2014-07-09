@@ -120,7 +120,9 @@
     (instance? JavaPairRDD ~coll)
     (if ~f
       (.partitionBy ~coll ~f)
-      (.partitionBy ~coll (Partitioner/defaultPartitioner ~coll nil)))
+      (.partitionBy ~coll (Partitioner/defaultPartitioner
+                            (.rdd ~coll)
+                            (scala.collection.mutable.LinkedList.))))
     :else (clojure.core/partition-by ~f ~coll)))
 
 (defmacro reduce
