@@ -8,19 +8,8 @@
   (:refer-clojure :exclude [count distinct filter first group-by keys map max
                             min name partition-by reduce take])
   (:import [org.apache.spark Partitioner]
-           [org.apache.spark.api.java JavaRDDLike JavaRDD JavaPairRDD
-            JavaDoubleRDD]
-           [org.apache.spark.api.java.function
-            DoubleFlatMapFunction
-            DoubleFunction
-            FlatMapFunction
-            FlatMapFunction2
-            Function
-            Function2
-            Function3
-            PairFlatMapFunction
-            PairFunction
-            VoidFunction])
+           [org.apache.spark.api.java JavaRDDLike JavaPairRDD]
+           [org.apache.spark.api.java.function Function Function2])
   (:require [clj-spark.util :as util]))
 
 (defmacro count
