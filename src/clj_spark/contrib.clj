@@ -30,3 +30,4 @@
     (instance? JavaPairRDD ~coll) (vec (map (fn [x#] (util/unbox-tuple2 x#)) (.collect ~coll)))
     (instance? JavaRDDLike ~coll) (vec (.collect ~coll))
     :else (vec ~coll)))
+

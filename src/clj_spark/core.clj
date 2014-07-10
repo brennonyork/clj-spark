@@ -1,8 +1,7 @@
-(ns ^{:doc
-      "clj-spark.core maintains all Spark functions that correlate directly to
-      clojure.core functions. These functions adhere to the contract that,
-      agnostic of their input (instance? ISeq or JavaRDDLike), they will return
-      their correct values regardless of data structure."
+(ns ^{:doc "clj-spark.core maintains all Spark functions that correlate
+      directly to clojure.core functions. These functions adhere to the
+      contract that, agnostic of their input (instance? ISeq or JavaRDDLike),
+      they will return their correct values regardless of data structure."
       :author "Brennon York"}
   clj-spark.core
   (:refer-clojure :exclude [count distinct filter first group-by keys map max

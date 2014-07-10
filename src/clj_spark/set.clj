@@ -1,6 +1,5 @@
-(ns ^{:doc
-      "clj-spark.set maintains all Spark functions that correlate directly to
-      clojure.set functions. These functions adhere to the contract that,
+(ns ^{:doc "clj-spark.set maintains all Spark functions that correlate directly
+      to clojure.set functions. These functions adhere to the contract that,
       agnostic of their input (instance? ISeq or JavaRDDLike), they will return
       their correct values regardless of collection."
       :author "Brennon York"}

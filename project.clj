@@ -6,9 +6,9 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.apache.spark/spark-core_2.10 "1.0.0"]]
   :prep-tasks ["clean" "compile"]
-  :aot [clj-spark.core
+  :aot [clj-spark.contrib
+        clj-spark.contrib-test
+        clj-spark.core
         clj-spark.core-test
         clj-spark.set
-        clj-spark.set-test
-        clj-spark.contrib
-        clj-spark.contrib-test])
+        clj-spark.set-test])

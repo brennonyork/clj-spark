@@ -1,8 +1,6 @@
 (ns clj-spark.set-test
   (:require [clojure.test :refer [deftest is testing]]
             [clj-spark.set :refer :all]
-            ;[clj-spark.contrib :as contrib]
-            ;[clj-spark.api :as api]
             )
   (:gen-class))
 
@@ -25,4 +23,6 @@
     (testing "with triple arity"
       (is (= (union #{1 2} #{2 3} #{3 4}) #{1 2 3 4})))))
 
-;(deftest set-transformations)
+(deftest set-transformations
+  (testing "intersection"
+    ))
