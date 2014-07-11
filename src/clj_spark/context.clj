@@ -4,6 +4,10 @@
   clj-spark.context
   (:import [org.apache.spark.api.java JavaSparkContext]))
 
+(defmacro spark-open
+  "Example: (spark-open :hdfs"
+  [])
+
 (defmacro with-context
   "Defines a wrapper around a SparkContext to ensure it gets shut down
   properly.
