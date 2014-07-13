@@ -34,10 +34,31 @@
 
 (defmacro open
   "Handles simplified opening of different file types into their Spark RDD
-  equivalent.
+  equivalent. Below is the breakdown from Clojure keyword to their Java
+  method counterparts:
 
-  Example: (open :file \"LICENSE\" spark-ctx)
-  (open :obj [[1 2] [3 4]] spark-ctx)"
+  .textFile           => :file OR :f
+  .sequenceFile       |
+  .hadoopFile         |
+  .newAPIHadoopFile   |
+
+  .wholeTextFiles     => :directory OR :dir
+
+  .objectFile         => :object OR :obj
+  .parallelize        |
+  .parallelizeDoubles |
+  .parallelizePairs   |
+
+  .hadoopRDD          => :rdd
+  .newAPIHadoopRDD    |
+
+  Examples:
+  (open :file \"LICENSE\" spark-ctx)   => Calls .textFile
+  (open :obj [[1 2] [3 4]] spark-ctx)  => Calls .parallelizePairs
+  (open :dir \"./testDir/\" spark-ctx) => Calls .wholeTextFiles
+  (open :file \"/tmp/seqFile.seq\"     => Calls .sequenceFile
+              java.lang.String
+              java.lang.Long spark-ctx)"
   [k path & more]
   (if (empty? more)
     (log/error "`open` requires a SparkContext as the last parameter")
