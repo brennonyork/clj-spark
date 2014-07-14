@@ -4,8 +4,8 @@
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.string :as clj-str]
             [clj-spark.core :refer :all]
-            [clj-spark.contrib :as contrib]
-            [clj-spark.api :as api])
+            [clj-spark.context :refer [with-context open]]
+            [clj-spark.contrib :as contrib])
   (:import [org.apache.spark HashPartitioner]
            [org.apache.spark.api.java.function Function])
   (:gen-class))
@@ -105,61 +105,58 @@
       (is (= (take 3 (drop 5 (range 1 11))) [6 7 8])))))
 
 (deftest core-transformations
-  (let [sc (api/ctx "local[2]" "transform-tests")]
-    (testing "count"
-      (is (= (count (.textFile sc "LICENSE")) 21)))
-    (testing "distinct"
-      (is (= (count (distinct (.textFile sc "LICENSE"))) 18)))
-    (testing "filter"
-      (is (= (count (filter (fn [x] (not (clj-str/blank? x)))
-                            (.textFile sc "LICENSE"))) 17)))
-    (testing "first"
-      (is (= (first (.textFile sc "LICENSE")) "The MIT License (MIT)")))
-    (testing "group-by"
-      (is (= (first (first (group-by (fn [x] (count x))
-                                     (.textFile sc "LICENSE")))) 56)))
-    (testing "keys"
-      (is (= (contrib/collect (keys (group-by (fn [x] (count x))
-                                              (.textFile sc "LICENSE"))))
-             [56 76 0 74 72 70 78 21 47 77 73 75 69 9 31])))
-    (testing "map"
-      (is (= (->> (.textFile sc "LICENSE")
-                  (map (fn [x] (count (clj-str/split x #" "))))
-                  (first))
-             4)))
-    (testing "max"
-      (is (= (->> (.textFile sc "LICENSE")
-                  (map (fn [x] (count (clj-str/split x #" "))))
-                  (max (fn [x y] (< x y))))
-             16)))
-    (testing "min"
-      (is (= (->> (.textFile sc "LICENSE")
-                  (map (fn [x] (count (clj-str/split x #" "))))
-                  (min (fn [x y] (< x y))))
-             1)))
-    (testing "name"
-      (is (= (name (.setName (.textFile sc "LICENSE") "License")) "License")))
-    (testing "partition-by"
-      (is (= (->> (.textFile sc "LICENSE")
-                  (group-by (fn [x] (count x)))
-                  (partition-by (HashPartitioner. 8))
-                  (first)
-                  (first))
-             56))
-      (is (= (->> (.textFile sc "LICENSE")
-                  (group-by (fn [x] (count x)))
-                  (partition-by nil)
-                  (first)
-                  (first))
-             56)))
-    (testing "reduce"
-      (is (= (->> (.textFile sc "LICENSE")
-                  (map (fn [x] (count (clj-str/split x #" "))))
-                  (reduce (fn [x y] (+ x y))))
-             175)))
-    (testing "take"
-      (is (= (->> (.textFile sc "LICENSE")
-                  (map (fn [x] (count (clj-str/split x #" "))))
-                  (take 5))
-             [4 1 5 1 13])))
-    (.stop sc)))
+  (with-context sc ["local[2]" "transform-tests"]
+    (let [f (open :file "LICENSE" sc)]
+      (testing "count"
+        (is (= (count f) 21)))
+      (testing "distinct"
+        (is (= (count (distinct f)) 18)))
+      (testing "filter"
+        (is (= (count (filter (fn [x] (not (clj-str/blank? x))) f)) 17)))
+      (testing "first"
+        (is (= (first f) "The MIT License (MIT)")))
+      (testing "group-by"
+        (is (= (first (first (group-by (fn [x] (count x)) f))) 56)))
+      (testing "keys"
+        (is (= (contrib/collect (keys (group-by (fn [x] (count x)) f)))
+               [56 76 0 74 72 70 78 21 47 77 73 75 69 9 31])))
+      (testing "map"
+        (is (= (->> f
+                    (map (fn [x] (count (clj-str/split x #" "))))
+                    (first))
+               4)))
+      (testing "max"
+        (is (= (->> f
+                    (map (fn [x] (count (clj-str/split x #" "))))
+                    (max (fn [x y] (< x y))))
+               16)))
+      (testing "min"
+        (is (= (->> f
+                    (map (fn [x] (count (clj-str/split x #" "))))
+                    (min (fn [x y] (< x y))))
+               1)))
+      (testing "name"
+        (is (= (name (.setName f "License")) "License")))
+      (testing "partition-by"
+        (is (= (->> f
+                    (group-by (fn [x] (count x)))
+                    (partition-by (HashPartitioner. 8))
+                    (first)
+                    (first))
+               56))
+        (is (= (->> f
+                    (group-by (fn [x] (count x)))
+                    (partition-by nil)
+                    (first)
+                    (first))
+               56)))
+      (testing "reduce"
+        (is (= (->> f
+                    (map (fn [x] (count (clj-str/split x #" "))))
+                    (reduce (fn [x y] (+ x y))))
+               175)))
+      (testing "take"
+        (is (= (->> f
+                    (map (fn [x] (count (clj-str/split x #" "))))
+                    (take 5))
+               [4 1 5 1 13]))))))

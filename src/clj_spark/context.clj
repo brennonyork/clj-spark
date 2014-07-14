@@ -1,5 +1,6 @@
-(ns ^{:doc "Provides users with convenient Clojure-based functions for handling
-      Spark context objects"
+(ns ^{:doc
+      "Provides users with convenient Clojure-based functions for handling
+      Spark context objects."
       :author "Brennon York"}
   clj-spark.context
   (:import [org.apache.spark.api.java JavaSparkContext])
@@ -53,10 +54,10 @@
   .newAPIHadoopRDD    |
 
   Examples:
-  (open :file \"LICENSE\" spark-ctx)   => Calls .textFile
-  (open :obj [[1 2] [3 4]] spark-ctx)  => Calls .parallelizePairs
-  (open :dir \"./testDir/\" spark-ctx) => Calls .wholeTextFiles
-  (open :file \"/tmp/seqFile.seq\"     => Calls .sequenceFile
+  (open :file \"LICENSE\" spark-ctx)      => Calls .textFile
+  (open :obj [[1 2] [3 4]] spark-ctx)   => Calls .parallelizePairs
+  (open :dir \"./testDir/\" spark-ctx)    => Calls .wholeTextFiles
+  (open :file \"/tmp/seqFile.seq\"        => Calls .sequenceFile
               java.lang.String
               java.lang.Long spark-ctx)"
   [k path & more]

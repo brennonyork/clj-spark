@@ -1,6 +1,8 @@
-(ns ^{:doc "clj-spark.state maintains all stateful operations on Spark RDD's."
+(ns ^{:doc "Maintains all stateful operations on Spark RDD's."
       :author "Brennon York"}
-  clj-spark.state)
+  clj-spark.state
+  (:import [org.apache.spark.api.java JavaPairRDD])
+  (:require [clojure.tools.logging :as log]))
 
 ;; Reg, Pair, Doub
 (defmacro cache
@@ -14,6 +16,18 @@
   the first time it is computed."
   [p coll]
   `(.persist ~coll ~p))
+
+(defmacro save
+  ""
+  [k path & more]
+  (if (empty? more)
+    (log/error "`open` requires a JavaRDDLike object as the last parameter")
+    (let [coll (last more)
+          more (drop-last more)]
+      (cond
+       (instance? JavaPairRDD coll) []
+
+       ))))
 
 ;; Pair
 (defmacro save-as-hadoop-dataset
