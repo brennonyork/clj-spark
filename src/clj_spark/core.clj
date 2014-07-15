@@ -6,7 +6,7 @@
       :author "Brennon York"}
   clj-spark.core
   (:refer-clojure :exclude [count distinct filter first group-by keys map max
-                            min name partition-by reduce take])
+                            min name partition-by reduce take vals])
   (:import [org.apache.spark Partitioner]
            [org.apache.spark.api.java JavaRDDLike JavaPairRDD]
            [org.apache.spark.api.java.function Function Function2])
@@ -130,3 +130,11 @@
   `(cond
     (instance? JavaRDDLike ~coll) (vec (.take ~coll ~n))
     :else (clojure.core/take ~n ~coll)))
+
+(defmacro vals
+  "Return an RDD with the values of each tuple. Overrides the Spark RDD method
+  of `.values`."
+  [coll]
+  `(cond
+    (instance? JavaPairRDD ~coll) (.values ~coll)
+    :else (clojure.core/vals ~coll)))

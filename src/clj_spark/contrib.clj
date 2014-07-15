@@ -120,14 +120,5 @@
   [coll]
   `(cond
     (instance? JavaDoubleRDD ~coll) (.sum ~coll)
-    (not (map? ~coll)) (reduce + ~coll)
+    (coll? ~coll) (reduce + ~coll)
     :else (log/errorf "Cannot `sum` with type %s." (type ~coll))))
-
-;; Pair
-(defmacro values
-  "Return an RDD with the values of each tuple."
-  [coll]
-  `(cond
-    (instance? JavaPairRDD ~coll) (.values ~coll)
-    (map? ~coll) (vals ~coll)
-    :else (log/errorf "Cannot `values` with type %s." (type ~coll))))

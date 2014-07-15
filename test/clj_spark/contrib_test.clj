@@ -47,4 +47,11 @@
     (is (= (mean {}) nil))
     (is (= (mean #{1 2 3 4 5}) 3.0))
     (is (= (mean [2 2 2 4]) 2.5))
-    (is (= (mean '(1 2 3 2 1)) 1.8))))
+    (is (= (mean '(1 2 3 2 1)) 1.8)))
+  (testing "reduce-by-key")
+  (testing "sum"
+    (is (= (sum nil) nil))
+    (is (= (sum {}) 0))
+    (is (= (sum #{1 2 3 4}) 10))
+    (is (= (sum [1 2 2 3]) 8))
+    (is (= (sum '(1 1 1 3)) 6))))

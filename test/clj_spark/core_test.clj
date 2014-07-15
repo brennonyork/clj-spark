@@ -1,6 +1,6 @@
 (ns clj-spark.core-test
   (:refer-clojure :exclude [count distinct filter first group-by keys map max
-                            min name partition-by reduce take])
+                            min name partition-by reduce take vals])
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.string :as clj-str]
             [clj-spark.core :refer :all]
@@ -102,7 +102,12 @@
       (is (= (take 3 '(1 2 3 4 5 6)) [1 2 3]))
       (is (= (take 3 [1 2]) [1 2]))
       (is (= (take 1 []) []))
-      (is (= (take 3 (drop 5 (range 1 11))) [6 7 8])))))
+      (is (= (take 3 (drop 5 (range 1 11))) [6 7 8]))))
+  (testing "vals"
+    (testing "with single arity"
+      (is (= (vals nil) nil))
+      (is (= (vals []) nil))
+      (is (= (vals {:a [1 2 3] :b 5}) [[1 2 3] 5])))))
 
 (deftest core-transformations
   (with-context sc ["local[2]" "transform-tests"]
@@ -159,4 +164,11 @@
         (is (= (->> f
                     (map (fn [x] (count (clj-str/split x #" "))))
                     (take 5))
-               [4 1 5 1 13]))))))
+               [4 1 5 1 13])))
+      (testing "vals"
+        (is (= (->> f
+                    (group-by (fn [x] (count x)))
+                    (vals)
+                    (first)
+                    str)
+               "[furnished to do so, subject to the following conditions:]"))))))
