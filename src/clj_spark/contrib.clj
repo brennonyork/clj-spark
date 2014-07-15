@@ -32,7 +32,7 @@
                                               (util/unbox-tuple2 x#))
                                             (.collect ~coll)))
     (instance? JavaRDDLike ~coll) (vec (.collect ~coll))
-    (coll? ~coll) (vec ~coll)
+    (coll? ~coll) (doall ~coll)
     :else (log/errorf "Cannot `collect` with type %s." (type ~coll))))
 
 ;; Pair
@@ -42,15 +42,25 @@
   [coll]
   `(cond
     (instance? JavaPairRDD ~coll) (into {} (.countByKey ~coll))
-    (coll? ~coll)
+    (map? ~coll)
     (into {} (map (fn [[x# y#]] [x# (if (coll? y#) (count y#) 0)]) ~coll))
     :else (log/errorf "Cannot `count-by-key` with type %s." (type ~coll))))
 
 (defmacro count-by-value
   "Return the count of each unique value in this RDD as a map of (value, count)
   pairs."
-  [t coll]
-  `(into {} (.countByValue ~coll ~t)))
+  [coll]
+  `(into {}
+         (cond
+          (instance? JavaRDDLike ~coll) (.countByValue ~coll)
+          (coll? ~coll) (map (fn [[x# y#]]
+                               [x# (count y#)])
+                             (group-by identity
+                                       (if (map? ~coll)
+                                         (flatten (vals ~coll))
+                                         ~coll)))
+          :else (log/errorf "Cannot `count-by-key` with type %s."
+                            (type ~coll)))))
 
 (defmacro foreach
   "Applies a function f to all elements of this RDD."
