@@ -83,21 +83,25 @@
   "Pass each value in the key-value pair RDD through a map function without
   changing the keys; this also retains the original RDD's partitioning."
   [f coll]
-  `(cond
-    (instance? JavaPairRDD ~coll) (.mapValues ~coll
-                                              (reify Function
-                                                (call [this v#] (~f v#))))
-    (map? ~coll) (into {} (map (fn [[x# y#]] [x# (~f y#)])))
-    :else (log/errorf "Cannot `map-values` with type %s." (type ~coll))))
+  (if (not (ifn? f))
+    `(log/errorf "Must supply function to `map-values`")
+    `(cond
+      (instance? JavaPairRDD ~coll) (.mapValues ~coll
+                                                (reify Function
+                                                  (call [this v#] (~f v#))))
+      (map? ~coll) (into {} (map (fn [[x# y#]] [x# (~f y#)]) ~coll))
+      :else (log/errorf "Cannot `map-values` with type %s." (type ~coll)))))
 
 ;; Doub
 (defmacro mean
   "Compute the mean of this RDD's elements."
   [coll]
-  `(cond
-    (instance? JavaDoubleRDD ~coll) (.mean ~coll)
-    (not (map? ~coll)) (double (/ (reduce + ~coll) (count ~coll)))
-    :else (log/errorf "Cannot `mean` with type %s." (type ~coll))))
+  (if (nil? coll)
+    `(log/error "Collection cannot be `nil`")
+    `(cond
+      (instance? JavaDoubleRDD ~coll) (.mean ~coll)
+      (not (map? ~coll)) (double (/ (reduce + ~coll) (count ~coll)))
+      :else (log/errorf "Cannot `mean` with type %s." (type ~coll)))))
 
 ;; Pair
 ;; TODO: Watch this for the arity type issue!!
