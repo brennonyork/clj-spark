@@ -12,33 +12,61 @@
            [org.apache.spark.api.java JavaRDDLike JavaPairRDD])
   (:require [clj-spark.util :as util]))
 
-(defmacro count
+(defn count
   "Return the number of elements in the RDD."
   [coll]
-  `(cond
-    (instance? JavaRDDLike ~coll) (.count ~coll)
-    :else (clojure.core/count ~coll)))
+  (cond
+    (instance? JavaRDDLike coll) (.count coll)
+    :else (clojure.core/count coll)))
 
-(defmacro distinct
+;; (defmacro count
+;;   "Return the number of elements in the RDD."
+;;   [coll]
+;;   `(cond
+;;     (instance? JavaRDDLike ~coll) (.count ~coll)
+;;     :else (clojure.core/count ~coll)))
+
+(defn distinct
   "Return a new RDD containing the distinct elements in this RDD."
   ([coll]
-   `(cond
-     (instance? JavaRDDLike ~coll) (.distinct ~coll)
-     :else (clojure.core/distinct ~coll)))
+   (cond
+     (instance? JavaRDDLike coll) (.distinct coll)
+     :else (clojure.core/distinct coll)))
   ([num-partitions coll]
-   `(.distinct ~coll ~num-partitions)))
+   (.distinct coll num-partitions)))
 
-(defmacro filter
+;; (defmacro distinct
+;;   "Return a new RDD containing the distinct elements in this RDD."
+;;   ([coll]
+;;    `(cond
+;;      (instance? JavaRDDLike ~coll) (.distinct ~coll)
+;;      :else (clojure.core/distinct ~coll)))
+;;   ([num-partitions coll]
+;;    `(.distinct ~coll ~num-partitions)))
+
+(defn filter
   [pred coll]
-  `(cond
-    (instance? JavaPairRDD ~coll)
-    (.filter ~coll (Func. (fn [x#] (~pred (util/unbox-tuple2 x#)))))
+  (cond
+    (instance? JavaPairRDD coll)
+    (.filter coll (Func. (fn [x] (pred (util/unbox-tuple2 x)))))
     ;(.filter ~coll (reify Function
     ;                 (call [this v#] (~pred (util/unbox-tuple2 v#)))))
-    (instance? JavaRDDLike ~coll) (.filter ~coll (Func. ~pred))
+    (instance? JavaRDDLike coll) (.filter coll (Func. pred))
     ;(.filter ~coll (reify Function
     ;                 (call [this v#] (~pred v#))))
-    :else (clojure.core/filter ~pred ~coll)))
+    :else (clojure.core/filter pred coll)))
+
+;; (defmacro filter
+;;   [pred coll]
+;;   `(cond
+;;     (instance? JavaPairRDD ~coll)
+;;     (.filter ~coll (Func. (fn [x#] (~pred (util/unbox-tuple2 x#)))))
+;;     ;(.filter ~coll (reify Function
+;;     ;                 (call [this v#] (~pred (util/unbox-tuple2 v#)))))
+;;     (instance? JavaRDDLike ~coll) (.filter ~coll (Func. ~pred))
+;;     ;(.filter ~coll (reify Function
+;;     ;                 (call [this v#] (~pred v#))))
+;;     :else (clojure.core/filter ~pred ~coll)))
 
 (defmacro first
   [coll]
