@@ -456,7 +456,7 @@
   "Return a new RDD by applying a function to all elements of this RDD."
   [f coll]
   `(.mapToPair ~coll (reify PairFunction
-                       (call [this v#] (~f v#)))))
+                       (call [this v#] (util/box-tuple2 (~f v#))))))
 
 ;; Pair
 ;; (defmacro map-values

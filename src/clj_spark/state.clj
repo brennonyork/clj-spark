@@ -1,4 +1,5 @@
-(ns ^{:doc "Maintains all stateful operations on Spark RDD's."
+(ns ^{:doc
+      "Maintains all stateful operations on Spark RDD's."
       :author "Brennon York"}
   clj-spark.state
   (:import [org.apache.spark.api.java JavaPairRDD])

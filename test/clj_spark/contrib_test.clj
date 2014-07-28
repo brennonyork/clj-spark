@@ -29,14 +29,6 @@
     (is (= (count-by-value {:a [1 2 3] :b [:c :d :d] "1" ["a" "c"]})
            {1 1 2 1 3 1 :c 1 :d 2 "a" 1 "c" 1})))
   (testing "foreach")
-  (testing "lookup"
-    (is (= (lookup :myk nil) nil))
-    (is (= (lookup :myk {}) nil))
-    (is (= (lookup 123 []) nil))
-    (is (= (lookup :somek []) nil))
-    (is (= (lookup "abdhsjf" nil) nil))
-    (is (= (lookup "abcd" {"abcd" "qwerty" "zxcv" "asdfg"}) "qwerty"))
-    (is (= (lookup :myk {:myk 12 :myb 23}) 12)))
   (testing "map-values"
     (is (= (map-values nil nil) nil))
     (is (= (map-values nil {}) nil))

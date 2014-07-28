@@ -68,15 +68,7 @@
   `(cond
     (instance? JavaRDDLike ~coll)
     (.foreach ~coll (reify VoidFunction (call [this v#] (~f v#))))
-    :else "Error: Unsupported function for ISeq"))
-
-;; Pair
-(defmacro lookup
-  "Return the list of values in the RDD for key key."
-  [k coll]
-  `(cond
-    (instance? JavaPairRDD ~coll) (.lookup ~coll ~k)
-    :else (get ~coll ~k)))
+    :else (clojure.core/for [v# ~coll] (~f v#))))
 
 ;; Pair
 (defmacro map-values

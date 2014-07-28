@@ -5,8 +5,8 @@
       values regardless of data structure."
       :author "Brennon York"}
   clj-spark.core
-  (:refer-clojure :exclude [count distinct filter first group-by keys map max
-                            min name partition-by reduce take vals])
+  (:refer-clojure :exclude [count distinct filter first get group-by keys map
+                            max min name partition-by reduce take vals])
   (:import [org.apache.spark Partitioner]
            [org.apache.spark.api.java JavaRDDLike JavaPairRDD]
            [org.apache.spark.api.java.function Function Function2])
@@ -45,6 +45,21 @@
     (instance? JavaPairRDD ~coll) (let [i# (.first ~coll)] (util/unbox-tuple2 i#))
     (instance? JavaRDDLike ~coll) (.first ~coll)
     :else (clojure.core/first ~coll)))
+
+(defmacro get
+  "Return the list of values in the RDD for key `k`. Overrides the Spark RDD
+  method of `.lookup`."
+  ([k coll]
+   `(cond
+     (instance? JavaPairRDD ~coll) (.lookup ~coll ~k)
+     :else (clojure.core/get ~coll ~k)))
+  ([k coll not-found]
+   `(cond
+     (instance? JavaPairRDD ~coll) (let [ret# (.lookup ~coll ~k)]
+                                     (if (not (empty? ret#))
+                                       ret#
+                                       ~not-found))
+     :else (clojure.core/get ~coll ~k ~not-found))))
 
 (defmacro group-by
   "Return an RDD of grouped elements."

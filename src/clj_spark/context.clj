@@ -27,10 +27,12 @@
   within the collection should come in the form of vector pairs."
   ([coll ctx]
    `(.parallelizePairs ~ctx (java.util.ArrayList.
-                             (clojure.core/map (fn [[x# y#]] (util/box-tuple2 x# y#)) ~coll))))
+                             (clojure.core/map (fn [[x# y#]]
+                                                 (util/box-tuple2 x# y#)) ~coll))))
   ([coll numSlices ctx]
    `(.parallelizePairs ~ctx (java.util.ArrayList.
-                             (clojure.core/map (fn [[x# y#]] (util/box-tuple2 x# y#)) ~coll))
+                             (clojure.core/map (fn [[x# y#]]
+                                                 (util/box-tuple2 x# y#)) ~coll))
                        ~numSlices)))
 
 (defmacro open
