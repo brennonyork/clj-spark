@@ -1,5 +1,11 @@
 (ns clj-spark.util)
 
+;; Loosely based on: http://stackoverflow.com/a/20312211
+(defn arg-count [f]
+  (let [m (filter #(= "invoke" (.getName %)) (.getDeclaredMethods (class f)))
+        p (map #(.getParameterTypes %) m)]
+    (map alength p)))
+
 (defmacro unbox-tuple2
   [x]
   `(identity [(._1 ~x) (._2 ~x)]))

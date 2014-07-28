@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [count distinct filter first get group-by keys map
                             max min name partition-by reduce take vals])
   (:import [org.apache.spark HashPartitioner]
-           [org.apache.spark.api.java.function Function])
+           [org.apache.spark.api.java.function Function]
+           )
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.string :as clj-str]
             [clj-spark.core :refer :all]

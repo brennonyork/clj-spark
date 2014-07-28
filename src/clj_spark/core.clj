@@ -7,9 +7,9 @@
   clj-spark.core
   (:refer-clojure :exclude [count distinct filter first get group-by keys map
                             max min name partition-by reduce take vals])
-  (:import [org.apache.spark Partitioner]
-           [org.apache.spark.api.java JavaRDDLike JavaPairRDD]
-           [org.apache.spark.api.java.function Function Function2])
+  (:import [clj_spark.function Func Func2]
+           [org.apache.spark Partitioner]
+           [org.apache.spark.api.java JavaRDDLike JavaPairRDD])
   (:require [clj-spark.util :as util]))
 
 (defmacro count
@@ -32,11 +32,12 @@
   [pred coll]
   `(cond
     (instance? JavaPairRDD ~coll)
-    (.filter ~coll (reify Function
-                     (call [this v#] (~pred (util/unbox-tuple2 v#)))))
-    (instance? JavaRDDLike ~coll)
-    (.filter ~coll (reify Function
-                     (call [this v#] (~pred v#))))
+    (.filter ~coll (Func. (fn [x#] (~pred (util/unbox-tuple2 x#)))))
+    ;(.filter ~coll (reify Function
+    ;                 (call [this v#] (~pred (util/unbox-tuple2 v#)))))
+    (instance? JavaRDDLike ~coll) (.filter ~coll (Func. ~pred))
+    ;(.filter ~coll (reify Function
+    ;                 (call [this v#] (~pred v#))))
     :else (clojure.core/filter ~pred ~coll)))
 
 (defmacro first
@@ -66,12 +67,15 @@
   ([f coll]
    `(cond
      (instance? JavaRDDLike ~coll)
-     (.groupBy ~coll (reify Function
-                       (call [this v#] (~f v#))))
+     (.groupBy ~coll (Func. ~f))
+     ;(.groupBy ~coll (reify Function
+     ;                  (call [this v#] (~f v#))))
      :else (clojure.core/group-by ~f ~coll)))
   ([f num-partitions coll]
-   `(.groupBy ~coll (reify Function
-                      (call [this v#] (~f v#))) ~num-partitions)))
+   `(.groupBy ~coll (Func. ~f) ~num-partitions)
+   ;`(.groupBy ~coll (reify Function
+   ;                   (call [this v#] (~f v#))) ~num-partitions)
+   ))
 
 (defmacro keys
   "Return an RDD with the keys of each tuple."
@@ -84,8 +88,9 @@
   ([f coll]
    `(cond
      (instance? JavaRDDLike ~coll)
-     (.map ~coll (reify Function
-                   (call [this v#] (~f v#))))
+     ;(.map ~coll (reify Function
+     ;              (call [this v#] (~f v#))))
+     (.map ~coll (Func. ~f))
      :else (clojure.core/map ~f ~coll)))
   ([f coll & more]
    `(clojure.core/map ~f ~coll ~@more)))
@@ -135,8 +140,9 @@
   ([f coll]
    `(cond
      (instance? JavaRDDLike ~coll)
-     (.reduce ~coll (reify Function2
-                      (call [this v# v2#] (~f v# v2#))))
+     (.reduce ~coll (Func2. ~f))
+     ;(.reduce ~coll (reify Function2
+     ;                 (call [this v# v2#] (~f v# v2#))))
      :else (clojure.core/reduce ~f ~coll)))
   ([f v coll] `(clojure.core/reduce ~f ~v ~coll)))
 
