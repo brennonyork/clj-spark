@@ -25,4 +25,4 @@ Now, given we do things completely different from things like the older [clj-spa
 
 ### Acknowledgements
 
-TheClimateCorporation/clj-spark for their initial implementation of the library and giving me inspiration to move the concept forward.
+@TheClimateCorporation/clj-spark for their initial implementation of the library and giving me inspiration to move the concept forward.
