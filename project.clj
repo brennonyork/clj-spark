@@ -11,6 +11,7 @@
                     ; tests
                     clj-spark.contrib-test
                     clj-spark.core-test
+                    clj-spark.example-test
                     clj-spark.set-test]}
              :provided
              {:dependencies

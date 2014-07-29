@@ -1,9 +1,7 @@
 (ns clj-spark.core-test
   (:refer-clojure :exclude [count distinct filter first get group-by keys map
                             max min name partition-by reduce take vals])
-  (:import [org.apache.spark HashPartitioner]
-           ;[org.apache.spark.api.java.function Function]
-           )
+  (:import [org.apache.spark HashPartitioner])
   (:require [clojure.test :refer [is testing]]
             [clj-spark.test-util :refer [mk-test]]
             [clj-spark.core :refer :all]
