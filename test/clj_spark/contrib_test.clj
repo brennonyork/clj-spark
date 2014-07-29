@@ -5,6 +5,8 @@
             [clj-spark.contrib :refer :all]
             [clj-spark.context :as context]))
 
+
+
 (deftest origins
   (testing "collect"
     (is (= (collect (into {} (map #(vec [(keyword (str %)) %]) [1 2 3 4])))

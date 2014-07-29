@@ -2,23 +2,13 @@
   (:refer-clojure :exclude [count distinct filter first get group-by keys map
                             max min name partition-by reduce take vals])
   (:import [org.apache.spark HashPartitioner]
-           [org.apache.spark.api.java.function Function]
+           ;[org.apache.spark.api.java.function Function]
            )
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [is testing]]
             [clj-spark.test-util :refer [mk-test]]
-            [clojure.string :as clj-str]
             [clj-spark.core :refer :all]
-            [clj-spark.context :refer [with-context open]]
-            [clj-spark.contrib :as contrib]))
-
-;; (defmacro mk-test
-;;   "Helper function to easily generate tests spanning across Clojure and Spark
-;;   data structures."
-;;   [test-name [fname] & body]
-;;   `(deftest ~(symbol (str test-name "-test"))
-;;      (with-context ctx# ["local[2]" "core-test-app"]
-;;        (let [~(symbol fname) (open :file "LICENSE" ctx#)]
-;;          ~@body))))
+            [clj-spark.contrib :as contrib]
+            [clojure.string :as clj-str]))
 
 (mk-test count [f]
   (testing "as clojure"
