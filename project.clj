@@ -6,5 +6,6 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/tools.logging "0.3.0"]
                  [org.apache.spark/spark-core_2.10 "1.0.0"]]
+  :prep-tasks ["clean" "compile"]
   :aot [clj-spark.function
         clj-spark.core-test])
