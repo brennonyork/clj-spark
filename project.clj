@@ -1,4 +1,4 @@
-(defproject clj-spark "0.1.0-SNAPSHOT"
+(defproject clj-spark "0.1.0"
   :description "Idiomatic Clojure bindings for Apache Spark"
   :url "http://example.com/FIXME"
   :license {:name "MIT"
