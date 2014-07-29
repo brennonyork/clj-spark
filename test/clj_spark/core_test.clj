@@ -5,19 +5,20 @@
            [org.apache.spark.api.java.function Function]
            )
   (:require [clojure.test :refer [deftest is testing]]
+            [clj-spark.test-util :refer [mk-test]]
             [clojure.string :as clj-str]
             [clj-spark.core :refer :all]
             [clj-spark.context :refer [with-context open]]
             [clj-spark.contrib :as contrib]))
 
-(defmacro mk-test
-  "Helper function to easily generate tests spanning across Clojure and Spark
-  data structures."
-  [test-name [fname] & body]
-  `(deftest ~(symbol (str test-name "-test"))
-     (with-context ctx# ["local[2]" "core-test-app"]
-       (let [~(symbol fname) (open :file "LICENSE" ctx#)]
-         ~@body))))
+;; (defmacro mk-test
+;;   "Helper function to easily generate tests spanning across Clojure and Spark
+;;   data structures."
+;;   [test-name [fname] & body]
+;;   `(deftest ~(symbol (str test-name "-test"))
+;;      (with-context ctx# ["local[2]" "core-test-app"]
+;;        (let [~(symbol fname) (open :file "LICENSE" ctx#)]
+;;          ~@body))))
 
 (mk-test count [f]
   (testing "as clojure"
@@ -76,10 +77,10 @@
       (is (= (get nil :b :c) :c)))
   (testing "as spark"
     (testing "with double arity"
-      (is (= (str (get 21 (group-by (fn [x] (count x)) f)))
+      (is (= (str (get 21 (group-by count f)))
              "[[The MIT License (MIT)]]")))
     (testing "with triple arity"
-      (is (= (get 22 (group-by (fn [x] (count x)) f) "missing"))
+      (is (= (get 22 (group-by count f) "missing"))
              "missing")))))
 
 (mk-test group-by [f]
@@ -95,14 +96,14 @@
              {1 [{:user-id 1, :uri "/"} {:user-id 1, :uri "/account"}],
               2 [{:user-id 2, :uri "/foo"}]}))))
   (testing "as spark"
-    (is (= (first (first (group-by (fn [x] (count x)) f))) 56))))
+    (is (= (first (first (group-by count f))) 56))))
 
 (mk-test keys [f]
   (testing "as clojure"
     (testing "with single arity"
       (is (= (keys {:keys :and, :some :values}) [:some :keys]))))
   (testing "as spark"
-    (is (= (contrib/collect (keys (group-by (fn [x] (count x)) f)))
+    (is (= (contrib/collect (keys (group-by count f)))
            [56 76 0 74 72 70 78 21 47 77 73 75 69 9 31]))))
 
 (mk-test map [f]
@@ -138,7 +139,7 @@
   (testing "as spark"
     (is (= (->> f
                 (map (fn [x] (count (clj-str/split x #" "))))
-                (max (fn [x y] (< x y))))
+                (max <))
            16))))
 
 (mk-test min [f]
@@ -151,7 +152,7 @@
   (testing "as spark"
     (is (= (->> f
                 (map (fn [x] (count (clj-str/split x #" "))))
-                (min (fn [x y] (< x y))))
+                (min <))
            1))))
 
 (mk-test name [f]
@@ -171,13 +172,13 @@
       (is (= (partition-by even? [1 1 1 2 2 3 3]) [[1 1 1] [2 2] [3 3]]))))
   (testing "as spark"
     (is (= (->> f
-                (group-by (fn [x] (count x)))
+                (group-by count)
                 (partition-by (HashPartitioner. 8))
                 (first)
                 (first))
            56))
     (is (= (->> f
-                (group-by (fn [x] (count x)))
+                (group-by count)
                 (partition-by nil)
                 (first)
                 (first))
@@ -195,7 +196,7 @@
   (testing "as spark"
     (is (= (->> f
                 (map (fn [x] (count (clj-str/split x #" "))))
-                (reduce (fn [x y] (+ x y))))
+                (reduce +))
            175))))
 
 (mk-test take [f]
@@ -219,7 +220,7 @@
       (is (= (vals {:a [1 2 3] :b 5}) [[1 2 3] 5]))))
   (testing "as spark"
     (is (= (->> f
-                (group-by (fn [x] (count x)))
+                (group-by count)
                 (vals)
                 (first)
                 str)

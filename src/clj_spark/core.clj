@@ -71,17 +71,21 @@
 (defn keys
   "Return an RDD with the keys of each tuple."
   [coll]
-  `(cond
-    (instance? JavaPairRDD coll) (.keys coll)
-    :else (clojure.core/keys coll)))
+  (cond
+   (instance? JavaPairRDD coll) (.keys coll)
+   :else (clojure.core/keys coll)))
 
 (defn map
   ([f coll]
    (cond
     (instance? JavaRDDLike coll) (.map coll (Func. f))
     :else (clojure.core/map f coll)))
-  ([f coll & more]
-   (apply clojure.core/map (apply flatten f coll more))))
+  ([f c1 c2]
+   (clojure.core/map f c1 c2))
+  ([f c1 c2 c3]
+   (clojure.core/map f c1 c2 c3))
+  ([f c1 c2 c3 & colls]
+   (apply clojure.core/map (concat [f c1 c2 c3] colls))))
 
 (defn max
   "Returns the maximum element from this RDD as defined by the specified
@@ -91,7 +95,8 @@
    (cond
     (instance? JavaRDDLike coll) (.max coll (comparator pred))
     :else (clojure.core/max pred coll)))
-  ([x y & more] `(clojure.core/max ~x ~y ~@more)))
+  ([x y & more]
+   (apply clojure.core/max (concat [x y] more))))
 
 (defn min
   "Returns the minimum element from this RDD as defined by the specified
@@ -101,7 +106,8 @@
    (cond
     (instance? JavaRDDLike coll) (.min coll (comparator pred))
     :else (clojure.core/min pred coll)))
-  ([x y & more] (apply clojure.core/min (flatten x y more))))
+  ([x y & more]
+   (apply clojure.core/min (concat [x y] more))))
 
 (defn name
   [coll]
