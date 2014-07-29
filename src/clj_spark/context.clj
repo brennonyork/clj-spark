@@ -111,6 +111,7 @@
   [sym [& ctx-args] & body]
   `(let [~(symbol sym) (JavaSparkContext. ~@ctx-args)
          start-time# (.startTime ~(symbol sym))]
-     ~@body
-     (.stop ~(symbol sym))
+     (try
+       ~@body
+       (finally (.stop ~(symbol sym))))
      (- (System/currentTimeMillis) start-time#)))
