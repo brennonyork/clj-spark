@@ -7,13 +7,7 @@
                  [org.clojure/tools.logging "0.3.0"]]
   :profiles {:dev
              {:prep-tasks ["clean" "compile"]
-              :aot [clj-spark.function
-                    ; tests
-;;                     clj-spark.contrib-test
-;;                     clj-spark.core-test
-;;                     clj-spark.example-test
-;;                     clj-spark.set-test
-                    ]}
+              :aot [clj-spark.function]}
              :test
              {:aot [; tests
                     clj-spark.contrib-test
