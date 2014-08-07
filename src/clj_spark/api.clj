@@ -17,14 +17,14 @@
   (:require [clj-spark.util :as util])
   (:gen-class))
 
-(defn ctx
-  "Returns a JavaSparkContext"
-  ([] (JavaSparkContext.))
-  ([a] (JavaSparkContext. a))
-  ([a b] (JavaSparkContext. a b))
-  ([a b c] (JavaSparkContext. a b c))
-  ([a b c d] (JavaSparkContext. a b c d))
-  ([a b c d e] (JavaSparkContext. a b c d e)))
+;; (defn ctx
+;;   "Returns a JavaSparkContext"
+;;   ([] (JavaSparkContext.))
+;;   ([a] (JavaSparkContext. a))
+;;   ([a b] (JavaSparkContext. a b))
+;;   ([a b c] (JavaSparkContext. a b c))
+;;   ([a b c d] (JavaSparkContext. a b c d))
+;;   ([a b c d e] (JavaSparkContext. a b c d e)))
 
 (defmacro aggregate
   "Aggregate the elements of each partition, and then the results for all the

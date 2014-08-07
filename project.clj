@@ -9,6 +9,13 @@
              {:prep-tasks ["clean" "compile"]
               :aot [clj-spark.function
                     ; tests
+;;                     clj-spark.contrib-test
+;;                     clj-spark.core-test
+;;                     clj-spark.example-test
+;;                     clj-spark.set-test
+                    ]}
+             :test
+             {:aot [; tests
                     clj-spark.contrib-test
                     clj-spark.core-test
                     clj-spark.example-test
@@ -18,4 +25,11 @@
               [[org.apache.spark/spark-core_2.10 "1.0.1"]
                [org.apache.spark/spark-streaming_2.10 "1.0.1"]
                [org.apache.spark/spark-streaming-kafka_2.10 "1.0.1"]
-               [org.apache.spark/spark-sql_2.10 "1.0.1"]]}})
+               [org.apache.spark/spark-sql_2.10 "1.0.1"]]}}
+  :repl-options {:init-ns clj-spark.core
+                 :init (do
+                         (require '[clj-spark.context :as ctx])
+                         (require '[clj-spark.contrib :as contrib])
+                         (require '[clj-spark.set :as sset])
+                         (def sc (org.apache.spark.api.java.JavaSparkContext.
+                                  "local" "repl-context")))})

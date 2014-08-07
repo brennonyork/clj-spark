@@ -7,33 +7,33 @@
   (:require [clj-spark.util :as util]
             [clojure.tools.logging :as log]))
 
-(defmacro parallelize
+(defn parallelize
   "Converts a Clojure collection into a Spark RDD for processing."
   ([coll ctx]
-   `(.parallelize ~ctx (java.util.ArrayList. ~coll)))
+   (.parallelize ctx (java.util.ArrayList. coll)))
   ([coll numSlices ctx]
-   `(.parallelize ~ctx (java.util.ArrayList. ~coll) ~numSlices)))
+   (.parallelize ctx (java.util.ArrayList. coll) numSlices)))
 
-(defmacro parallelize->double
+(defn parallelize->double
   "Converts a Clojure collection into a Spark DoubleRDD for processing."
   ([coll ctx]
-   `(.parallelizeDoubles ~ctx (java.util.ArrayList. (map double ~coll))))
+   (.parallelizeDoubles ctx (java.util.ArrayList. (map double coll))))
   ([coll numSlices ctx]
-   `(.parallelizeDoubles ~ctx (java.util.ArrayList. (map double ~coll))
-                         ~numSlices)))
+   (.parallelizeDoubles ctx (java.util.ArrayList. (map double coll))
+                         numSlices)))
 
-(defmacro parallelize->pair
+(defn parallelize->pair
   "Converts a Clojure collection into a Spark PairRDD for processing. Elements
   within the collection should come in the form of vector pairs."
   ([coll ctx]
-   `(.parallelizePairs ~ctx (java.util.ArrayList.
-                             (clojure.core/map (fn [[x# y#]]
-                                                 (util/box-tuple2 x# y#)) ~coll))))
+   (.parallelizePairs ctx (java.util.ArrayList.
+                             (clojure.core/map (fn [[x y]]
+                                                 (util/box-tuple2 x y)) coll))))
   ([coll numSlices ctx]
-   `(.parallelizePairs ~ctx (java.util.ArrayList.
-                             (clojure.core/map (fn [[x# y#]]
-                                                 (util/box-tuple2 x# y#)) ~coll))
-                       ~numSlices)))
+   (.parallelizePairs ctx (java.util.ArrayList.
+                             (clojure.core/map (fn [[x y]]
+                                                 (util/box-tuple2 x y)) coll))
+                       numSlices)))
 
 (defmacro open
   "Handles simplified opening of different file types into their Spark RDD
@@ -111,6 +111,7 @@
   [sym [& ctx-args] & body]
   `(let [~(symbol sym) (JavaSparkContext. ~@ctx-args)
          start-time# (.startTime ~(symbol sym))]
-     ~@body
-     (.stop ~(symbol sym))
+     (try
+       ~@body
+       (finally (.stop ~(symbol sym))))
      (- (System/currentTimeMillis) start-time#)))

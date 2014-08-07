@@ -18,3 +18,11 @@
                 (contrib/reduce-by-key (fn [x y] (+ x y)))
                 (get "the"))
            [6]))))
+
+(mk-test inner-closure [f]
+  (testing "a map within a map"
+    (is (= (->> f
+                (map (fn [x] (api/map->pair (fn [y] [x y]) f)))
+                first
+                contrib/collect)
+           []))))
